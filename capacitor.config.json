@@ -1,10 +1,11 @@
 {
-  "appId": "com.example.yourapp",
-  "appName": "Название приложения",
+  "appId": "com.sergey.romanov.demoapp",
+  "appName": "demoapp",
   "webDir": "dist",
   "plugins": {
     "CapacitorUpdater": {
-      "autoUpdate": false
+      "autoUpdate": false,
+      "appId": "com.sergey.romanov.demoapp"
     }
   }
 }
