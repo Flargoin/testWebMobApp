@@ -2,6 +2,7 @@
   "appId": "com.sergey.romanov.demoapp",
   "appName": "demoapp",
   "webDir": "dist",
+  "version": "0.0.1",
   "plugins": {
     "CapacitorUpdater": {
       "autoUpdate": false,
