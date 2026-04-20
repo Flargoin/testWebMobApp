@@ -1,6 +1,10 @@
 {
-  "appId": "com.plastika-okon.app",
-  "appName": "ЛК 'Пластика Окон'",
-  "webDir": "dist"
+  "appId": "com.example.yourapp",
+  "appName": "Название приложения",
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false
+    }
+  }
 }
-
