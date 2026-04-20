@@ -2,37 +2,42 @@ name: Build Web & Deploy to Capgo
 
 on:
   push:
-    branches: ["main"] # Срабатывает при пуше в main
+    branches: [ "main", "master" ]  # Добавил master на всякий случай
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # ВАЖНО: разрешаем запись в репозиторий
     steps:
-      - uses: actions/checkout@v4
-
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
+          
       - name: Install Dependencies
         run: npm ci
-
+      
       - name: Build Web App
-        run: npm run build # Создает папку dist/
-
-      # --- ЧАСТЬ 1: GitHub Pages (Веб) ---
+        run: npm run build
+        
+      # --- ЧАСТЬ 1: GitHub Pages ---
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4  # Исправлено название и версия
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           publish_branch: gh-pages
-
-      # --- ЧАСТЬ 2: Capacitor Sync + Capgo (Мобильное OTA) ---
+          force_orphan: true  # Очищает ветку при каждом деплое
+          
+      # --- ЧАСТЬ 2: Capacitor Sync ---
       - name: Sync Capacitor
         run: npx cap sync
-
+        
+      # --- ЧАСТЬ 3: Capgo OTA Update ---
       - name: Upload to Capgo
         run: npx @capgo/cli bundle upload --channel production
         env:
