@@ -43,6 +43,9 @@ const toggleDropHeader = () => (header.isDrop = !header.isDrop);
 .header {
   max-height: 77px;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
+
   &__container {
     display: flex;
     align-items: center;

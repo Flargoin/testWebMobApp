@@ -65,6 +65,7 @@ import { createMemoryHistory, createRouter } from "vue-router";
 .menu {
   padding: 2px;
   position: fixed;
+  z-index: 1;
   bottom: 11px;
   left: 50%;
   transform: translateX(-50%);
