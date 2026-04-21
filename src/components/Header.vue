@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive } from "vue";
 
-let path = ref("Главная");
+let path = ref("Главная1");
 let header = reactive({
   canDrop: false,
   isDrop: false,
