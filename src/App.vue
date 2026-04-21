@@ -2,13 +2,14 @@
 import { ref } from "vue";
 import Header from "./components/Header.vue";
 import Menu from "./components/Menu.vue";
+import UpdateNotification from "./components/UpdateNotification.vue";
 </script>
 
 <template>
   <Header />
   <RouterView />
-  <!-- Сюда будут подставляться HomeView и MenuView -->
   <Menu />
+  <UpdateNotification />
 </template>
 
 <style>

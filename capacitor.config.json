@@ -4,9 +4,10 @@
   "webDir": "dist",
   "version": "1.0.0",
   "plugins": {
-    "CapacitorUpdater": {
-      "autoUpdate": false,
-      "appId": "com.sergey.romanov.demoapp"
+    "LiveUpdate": {
+      "autoUpdateStrategy": "none",
+      "readyTimeout": 10000,
+      "autoDeleteBundles": true
     }
   }
 }

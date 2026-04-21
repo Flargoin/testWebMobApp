@@ -1,4 +1,4 @@
-name: Build Web & Deploy to Capgo
+name: Build Web & Android
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'  # ← ИЗМЕНЕНО: 17 → 21
+          java-version: '21'
           
       - name: Verify Node.js version
         run: |
@@ -43,6 +43,25 @@ jobs:
           publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true
+
+      - name: Create dist.zip for Live Update
+        run: |
+          cd dist
+          zip -r ../dist.zip .
+          cd ..
+
+      - name: Generate version tag
+        id: version
+        run: echo "tag=v$(date +'%Y.%m.%d-%H%M%S')-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release with bundle
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          files: dist.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Sync Capacitor
         run: |
@@ -61,8 +80,3 @@ jobs:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
-          
-      - name: Upload to Capgo
-        run: npx @capgo/cli bundle upload --channel production
-        env:
-          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
