@@ -47,7 +47,7 @@ const onSlideChange = () => {
   </div>
 </template>
 
-<style>
+<style lang="scss">
 .container {
   overflow: hidden;
 
@@ -72,12 +72,26 @@ const onSlideChange = () => {
   flex-direction: column;
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 16px;
   padding: 16px;
   color: white;
   min-height: 105px;
+
+  &__img {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
 }
 </style>
