@@ -1,104 +1,120 @@
 <script setup>
-import { ref, provide, reactive, onBeforeMount } from "vue";
+import { ref, provide, reactive, onBeforeMount, onMounted } from "vue";
 import Header from "./components/Header.vue";
 import Menu from "./components/Menu.vue";
 import UpdateNotification from "./components/UpdateNotification.vue";
 import { useRouter } from "vue-router";
-import { BiometricAuth } from "capacitor-biometric-authentication";
+// Правильный импорт для вашего плагина
+import { BiometricAuth } from "@aparajita/capacitor-biometric-auth";
 
 const router = useRouter();
 
-const authData = reactive({
-  login: "",
-  password: "",
-});
-
+const authData = reactive({ login: "", password: "" });
 const isAuth = ref(false);
-const isBiometricVerified = ref(false); // Флаг для отслеживания биометрической проверки
+const isBiometricAvailable = ref(false);
 
-// Функция биометрической аутентификации
-async function authenticateUser() {
+// --- Функция проверки доступности (по документации) ---
+async function checkBiometryAvailability() {
   try {
-    // Проверяем, доступна ли биометрия на устройстве
-    const { isAvailable } = await BiometricAuth.isAvailable();
+    // Используем checkBiometry, а не isAvailable
+    const result = await BiometricAuth.checkBiometry();
+    isBiometricAvailable.value = result.isAvailable;
 
-    if (!isAvailable) {
-      console.log("Биометрия не доступна");
-      // Если биометрия недоступна, всё равно пускаем? (зависит от требований)
-      return true; // или false, если биометрия обязательна
+    if (result.isAvailable) {
+      console.log("✅ Биометрия готова:", result.biometryType);
+    } else {
+      console.log("❌ Биометрия не готова, причина:", result.reason);
     }
-
-    // Запрашиваем аутентификацию
-    const result = await BiometricAuth.authenticate({
-      reason: "Для дополнительной безопасности подтвердите личность",
-      fallbackButtonTitle: "Использовать PIN-код",
-      cancelButtonTitle: "Отмена",
-    });
-
-    if (result.isAuthenticated) {
-      console.log("✅ Биометрическое подтверждение пройдено!");
-      return true;
-    }
-
-    return false;
+    return result.isAvailable;
   } catch (error) {
-    console.error("Ошибка аутентификации", error);
+    console.error("Ошибка проверки", error);
+    isBiometricAvailable.value = false;
     return false;
   }
 }
 
-// Сохраняем состояние авторизации
+// --- Функция аутентификации (без .isAuthenticated) ---
+async function authenticateUser() {
+  try {
+    // 1. Проверяем доступность
+    const isAvailable = await checkBiometryAvailability();
+    if (!isAvailable) {
+      console.log("Биометрия не поддерживается, вход по логину/паролю");
+      return true; // Пропускаем, если биометрия не обязательна
+    }
+
+    // 2. Запрашиваем аутентификацию. Promise выполнится при УСПЕХЕ.
+    await BiometricAuth.authenticate({
+      reason: "Подтвердите личность для входа",
+      cancelTitle: "Отмена",
+      allowDeviceCredential: true, // Разрешить PIN/пароль как запасной вариант
+      androidTitle: "Вход в приложение",
+      androidSubtitle: "Требуется подтверждение",
+      androidDescription: "Приложите палец к датчику или используйте PIN",
+    });
+
+    // Если мы здесь — значит успех!
+    console.log("✅ Биометрия пройдена!");
+    return true;
+  } catch (error) {
+    // Обработка ошибок: error.code содержит тип ошибки
+    if (error.code === "userCancel") {
+      console.log("Пользователь отменил");
+    } else if (error.code === "authenticationFailed") {
+      console.log("❌ Отпечаток не распознан");
+    } else {
+      console.error("Ошибка:", error.message);
+    }
+    return false;
+  }
+}
+
+// --- Логин с проверкой ---
+const checkAuth = async (data) => {
+  if (data.login === "login" && data.password === "password") {
+    const biometricSuccess = await authenticateUser();
+    if (biometricSuccess) {
+      setIsAuth(true);
+      router.push("/");
+    } else {
+      alert("Требуется биометрическое подтверждение");
+    }
+  } else {
+    alert("Неверный логин или пароль");
+  }
+};
+
 const setIsAuth = (value) => {
   isAuth.value = value;
   window.localStorage.setItem("isAuth", JSON.stringify(value));
 };
 
-// Загружаем состояние авторизации при старте
 const loadAuthState = () => {
-  const savedAuth = window.localStorage.getItem("isAuth");
-  if (savedAuth !== null) {
-    isAuth.value = JSON.parse(savedAuth);
-  }
+  const saved = window.localStorage.getItem("isAuth");
+  if (saved) isAuth.value = JSON.parse(saved);
 };
 
-// Проверка логина/пароля с последующей биометрией
-const checkAuth = async (data) => {
-  // Шаг 1: Проверяем логин и пароль
-  if (data.login === "login" && data.password === "password") {
-    console.log("✅ Логин и пароль верны!");
-
-    // Шаг 2: Запрашиваем биометрию как дополнительное подтверждение
-    const biometricSuccess = await authenticateUser();
-
-    if (biometricSuccess) {
-      console.log(
-        "✅ Биометрическая проверка пройдена! Полный доступ разрешён.",
-      );
-      setIsAuth(true);
-      router.push("/");
-    } else {
-      console.log("❌ Биометрическая проверка не пройдена!");
-      alert("Требуется биометрическое подтверждение для входа в приложение");
-      // Остаёмся на странице логина
-    }
-  } else {
-    console.log("❌ Неверный логин или пароль!");
-    alert("Неверный логин или пароль");
-  }
-};
-
-// Функция для выхода из аккаунта
 const logout = () => {
   setIsAuth(false);
   router.push("/login");
 };
 
-// Загружаем состояние авторизации при монтировании
-onBeforeMount(() => {
-  loadAuthState();
+// --- Жизненный цикл ---
+onBeforeMount(() => loadAuthState());
+
+onMounted(async () => {
+  await checkBiometryAvailability();
+  // Слушаем изменения биометрии (например, если пользователь добавил палец)
+  try {
+    const listener = await BiometricAuth.addResumeListener((result) => {
+      isBiometricAvailable.value = result.isAvailable;
+    });
+    // В реальном приложении listener нужно удалять при unmount компонента
+  } catch (e) {
+    console.error(e);
+  }
 });
 
-// Предоставляем методы и данные дочерним компонентам
 provide("authData", authData);
 provide("checkAuth", checkAuth);
 provide("isAuth", isAuth);
@@ -114,7 +130,6 @@ provide("logout", logout);
   <RouterView v-else />
   <UpdateNotification />
 </template>
-
 <style>
 * {
   box-sizing: border-box;
@@ -136,4 +151,3 @@ button {
   cursor: pointer;
 }
 </style>
-  

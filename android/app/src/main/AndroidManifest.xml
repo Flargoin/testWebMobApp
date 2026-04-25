@@ -38,4 +38,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Основное разрешение для современной биометрии (Android 6.0+) -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- Разрешение для обратной совместимости (Android 5 и ниже) -->
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 </manifest>
